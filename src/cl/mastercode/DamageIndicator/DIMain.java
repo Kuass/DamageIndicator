@@ -39,7 +39,6 @@ import org.bukkit.entity.Item;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- *
  * @author YitanTribal, Beelzebu
  */
 public class DIMain extends JavaPlugin {
@@ -74,7 +73,7 @@ public class DIMain extends JavaPlugin {
         reload();
         updateConfig();
         damageIndicatorListener = new DamageIndicatorListener(this);
-        bloodListener = new BloodListener(this);
+        bloodListener = new BloodListener();
         Bukkit.getPluginManager().registerEvents(damageIndicatorListener, this);
         Bukkit.getPluginManager().registerEvents(bloodListener, this);
         getCommand("damageindicator").setExecutor(new CommandHandler(this));
