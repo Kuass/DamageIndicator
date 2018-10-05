@@ -29,7 +29,6 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.MagmaCube;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Slime;
@@ -43,7 +42,6 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 
 /**
- *
  * @author YitanTribal, Beelzebu
  */
 public class DamageIndicatorListener implements Listener {
@@ -51,7 +49,9 @@ public class DamageIndicatorListener implements Listener {
     private final DIMain plugin;
     @Getter
     private final LinkedHashMap<ArmorStand, Long> armorStands = new LinkedHashMap<>();
-    private final boolean enablePlayer, enableMonster, enableAnimal, protocollib;
+    private final boolean enablePlayer;
+    private final boolean enableMonster;
+    private final boolean enableAnimal;
     private EntityHider hider;
 
     public DamageIndicatorListener(DIMain plugin) {
@@ -59,8 +59,7 @@ public class DamageIndicatorListener implements Listener {
         enablePlayer = plugin.getConfig().getBoolean("Damage Indicator.Player");
         enableMonster = plugin.getConfig().getBoolean("Damage Indicator.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
-        protocollib = Bukkit.getPluginManager().isPluginEnabled("ProtocolLib");
-        if (protocollib) {
+        if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
             hider = new EntityHider(plugin, Policy.BLACKLIST);
         }
     }
@@ -131,13 +130,13 @@ public class DamageIndicatorListener implements Listener {
         if (entity instanceof Player && !enablePlayer) {
             return;
         }
-        if ((entity instanceof Monster || entity instanceof Slime || entity instanceof MagmaCube) && !enableMonster) {
+        if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
             return;
         }
         if (entity instanceof Animals && !enableAnimal) {
             return;
         }
-        armorStands.put(getDefaultArmorStand(is18() ? entity.getEyeLocation() : entity.getLocation(), format), System.currentTimeMillis());
+        armorStands.put(getDefaultArmorStand(entity.getLocation(), format), System.currentTimeMillis());
     }
 
     public ArmorStand getDefaultArmorStand(Location loc, String name) {
@@ -148,25 +147,15 @@ public class DamageIndicatorListener implements Listener {
         as.setRemoveWhenFarAway(true);
         as.setMetadata("Mastercode-DamageIndicator", new FixedMetadataValue(plugin, 1));
         as.setGravity(false);
-        if (!is18()) {
-            as.setCollidable(false);
-            as.setInvulnerable(true);
-        }
+        as.setCollidable(false);
+        as.setInvulnerable(true);
         as.setMarker(true);
-        as.teleport(is18() ? loc.add(0, 2, 0) : loc.add(0, 1.6, 0));
+        as.teleport(loc.add(0, 1.6, 0));
         as.setCustomName(name);
         as.setCustomNameVisible(true);
-        Bukkit.getOnlinePlayers().stream().filter(op -> !plugin.getStorageProvider().showArmorStand(op)).forEach(op -> hider.hideEntity(op, as));
-        return as;
-    }
-
-    private boolean is18() {
-        try {
-            ArmorStand.class.getMethod("setCollidable", boolean.class);
-            return false;
-        } catch (NoSuchMethodError | NoSuchMethodException | SecurityException ex) {
-            ex.printStackTrace();
-            return true;
+        if (hider != null) {
+            Bukkit.getOnlinePlayers().stream().filter(op -> !plugin.getStorageProvider().showArmorStand(op)).forEach(op -> hider.hideEntity(op, as));
         }
+        return as;
     }
 }

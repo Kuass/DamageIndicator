@@ -15,14 +15,15 @@
  */
 package cl.mastercode.DamageIndicator.listener;
 
-import cl.mastercode.DamageIndicator.DIMain;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -31,21 +32,20 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 /**
- *
  * @author Beelzebu
  */
 @RequiredArgsConstructor
 public class BloodListener implements Listener {
 
-    private final DIMain plugin;
+    private static final String BLOOD_NAME = "di-blood";
     @Getter
     private final Map<Item, Long> bloodItems = new LinkedHashMap<>();
 
@@ -54,13 +54,17 @@ public class BloodListener implements Listener {
         if (e.isCancelled() || !(e.getEntity() instanceof LivingEntity) || e.getEntity().getType().equals(EntityType.ARMOR_STAND)) {
             return;
         }
-        e.getEntity().getWorld().spigot().playEffect(((LivingEntity) e.getEntity()).getEyeLocation(), Effect.COLOURED_DUST, 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
+        e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation(), 7, .5, 1, .5, new Particle.DustOptions(Color.RED, 3f));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onItemPickup(PlayerPickupItemEvent e) {
+    public void onItemPickup(EntityPickupItemEvent e) {
         if (bloodItems.containsKey(e.getItem())) {
             e.setCancelled(true);
+            return;
+        }
+        if (e.getItem().getPickupDelay() == Integer.MAX_VALUE && e.getItem().getItemStack().getItemMeta().hasDisplayName() && e.getItem().getItemStack().getItemMeta().getDisplayName().startsWith(BLOOD_NAME)) {
+            e.getItem().remove();
         }
     }
 
@@ -73,15 +77,16 @@ public class BloodListener implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent e) {
-        e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, 152);
-        e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, 55, 1);
+        for (int i = 0; i < 3; i++) {
+            e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
+        }
+        e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, Material.REDSTONE_WIRE, 2);
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent e) {
         for (int i = 0; i < 14; i++) {
-            ItemStack is = new ItemStack(Material.INK_SACK);
-            is.setDurability((short) 1);
+            ItemStack is = new ItemStack(Material.ROSE_RED);
             ItemMeta meta = is.getItemMeta();
             meta.setDisplayName("di-blood" + i);
             is.setItemMeta(meta);
