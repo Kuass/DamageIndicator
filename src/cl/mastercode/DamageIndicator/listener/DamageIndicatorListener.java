@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2018 YitanTribal & Beelzebu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,15 @@
 package cl.mastercode.DamageIndicator.listener;
 
 import cl.mastercode.DamageIndicator.DIMain;
+import cl.mastercode.DamageIndicator.util.CompatUtil;
 import cl.mastercode.DamageIndicator.util.EntityHider;
 import cl.mastercode.DamageIndicator.util.EntityHider.Policy;
 import java.text.DecimalFormat;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -35,6 +40,7 @@ import org.bukkit.entity.Slime;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -46,9 +52,12 @@ import org.bukkit.metadata.FixedMetadataValue;
  */
 public class DamageIndicatorListener implements Listener {
 
+    private static final String DISABLED_DI = "DI-DISABLED-DI";
     private final DIMain plugin;
     @Getter
-    private final LinkedHashMap<ArmorStand, Long> armorStands = new LinkedHashMap<>();
+    private final Map<ArmorStand, Long> armorStands = new LinkedHashMap<>();
+    private final Set<EntityType> disabledEntities = new HashSet<>();
+    private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
     private final boolean enablePlayer;
     private final boolean enableMonster;
     private final boolean enableAnimal;
@@ -61,6 +70,33 @@ public class DamageIndicatorListener implements Listener {
         enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
         if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
             hider = new EntityHider(plugin, Policy.BLACKLIST);
+        }
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Entities").stream().map(entity -> {
+            try {
+                return EntityType.valueOf(entity.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).forEach(disabledEntities::add);
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Reasons").stream().map(reason -> {
+            try {
+                return CreatureSpawnEvent.SpawnReason.valueOf(reason.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onCreatureSpawn(CreatureSpawnEvent e) {
+        if (e.isCancelled()) {
+            return;
+        }
+        if (!spawnArmorStand(e.getEntity())) {
+            return;
+        }
+        if (disabledSpawnReasons.contains(e.getSpawnReason())) {
+            e.getEntity().setMetadata(DISABLED_DI, new FixedMetadataValue(plugin, 1));
         }
     }
 
@@ -78,7 +114,7 @@ public class DamageIndicatorListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onChunkload(ChunkLoadEvent event) {
+    public void onChunkLoad(ChunkLoadEvent event) {
         for (Entity entity : event.getChunk().getEntities()) {
             if (entity.getType().equals(EntityType.ARMOR_STAND)) {
                 ArmorStand as = (ArmorStand) entity;
@@ -121,41 +157,56 @@ public class DamageIndicatorListener implements Listener {
     }
 
     private void handleArmorStand(LivingEntity entity, String format) {
-        if (entity.hasMetadata("NPC")) {
-            return;
-        }
-        if (entity instanceof ArmorStand) {
-            return;
-        }
-        if (entity instanceof Player && !enablePlayer) {
-            return;
-        }
-        if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
-            return;
-        }
-        if (entity instanceof Animals && !enableAnimal) {
+        if (!spawnArmorStand(entity)) {
             return;
         }
         armorStands.put(getDefaultArmorStand(entity.getLocation(), format), System.currentTimeMillis());
     }
 
     public ArmorStand getDefaultArmorStand(Location loc, String name) {
-        ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(new Location(loc.getWorld(), loc.getX(), 200, loc.getZ()), EntityType.ARMOR_STAND);
+        ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(loc.clone().add(0, 255 - loc.getY(), 0), EntityType.ARMOR_STAND);
         as.setVisible(false);
         as.setCustomNameVisible(false);
         as.setSmall(true);
         as.setRemoveWhenFarAway(true);
         as.setMetadata("Mastercode-DamageIndicator", new FixedMetadataValue(plugin, 1));
         as.setGravity(false);
-        as.setCollidable(false);
-        as.setInvulnerable(true);
+        if (!CompatUtil.is18()) {
+            as.setCollidable(false);
+            as.setInvulnerable(true);
+        }
         as.setMarker(true);
-        as.teleport(loc.add(0, 1.6, 0));
+        as.teleport(loc.add(0, plugin.getConfig().getDouble("Damage Indicator.Distance"), 0));
         as.setCustomName(name);
         as.setCustomNameVisible(true);
         if (hider != null) {
             Bukkit.getOnlinePlayers().stream().filter(op -> !plugin.getStorageProvider().showArmorStand(op)).forEach(op -> hider.hideEntity(op, as));
         }
         return as;
+    }
+
+    private boolean spawnArmorStand(Entity entity) {
+        if (entity.hasMetadata("NPC")) {
+            return false;
+        }
+        if (entity.hasMetadata(DISABLED_DI)) {
+            return false;
+        }
+        if (!(entity instanceof LivingEntity)) {
+            return false;
+        }
+        if (entity instanceof ArmorStand) {
+            return false;
+        }
+        if (entity instanceof Player && !enablePlayer) {
+            return false;
+        }
+        if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
+            return false;
+        }
+        if (entity instanceof Animals && !enableAnimal) {
+            return false;
+        }
+        return !disabledEntities.contains(entity.getType());
     }
 }

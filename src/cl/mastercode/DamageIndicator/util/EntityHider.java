@@ -1,6 +1,26 @@
 package cl.mastercode.DamageIndicator.util;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Map;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.plugin.Plugin;
 import static com.comphenix.protocol.PacketType.Play.Server.ANIMATION;
 import static com.comphenix.protocol.PacketType.Play.Server.ATTACH_ENTITY;
 import static com.comphenix.protocol.PacketType.Play.Server.BLOCK_BREAK_ANIMATION;
@@ -22,68 +42,31 @@ import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_LIVING;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_PAINTING;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Map;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.plugin.Plugin;
 
+/**
+ * Original source: https://gist.github.com/aadnk/5871793
+ *
+ * @author aadnk
+ */
 public class EntityHider implements Listener {
-
-    protected Table<Integer, Integer, Boolean> observerEntityMap = HashBasedTable.create();
 
     // Packets that update remote player entities
     private static final PacketType[] ENTITY_PACKETS = {
-        ENTITY_EQUIPMENT, ANIMATION, NAMED_ENTITY_SPAWN,
-        COLLECT, SPAWN_ENTITY, SPAWN_ENTITY_LIVING, SPAWN_ENTITY_PAINTING, SPAWN_ENTITY_EXPERIENCE_ORB,
-        ENTITY_VELOCITY, REL_ENTITY_MOVE, ENTITY_LOOK, ENTITY_MOVE_LOOK, ENTITY_MOVE_LOOK,
-        ENTITY_TELEPORT, ENTITY_HEAD_ROTATION, ENTITY_STATUS, ATTACH_ENTITY, ENTITY_METADATA,
-        ENTITY_EFFECT, REMOVE_ENTITY_EFFECT, BLOCK_BREAK_ANIMATION
+            ENTITY_EQUIPMENT, ANIMATION, NAMED_ENTITY_SPAWN,
+            COLLECT, SPAWN_ENTITY, SPAWN_ENTITY_LIVING, SPAWN_ENTITY_PAINTING, SPAWN_ENTITY_EXPERIENCE_ORB,
+            ENTITY_VELOCITY, REL_ENTITY_MOVE, ENTITY_LOOK, ENTITY_MOVE_LOOK, ENTITY_MOVE_LOOK,
+            ENTITY_TELEPORT, ENTITY_HEAD_ROTATION, ENTITY_STATUS, ATTACH_ENTITY, ENTITY_METADATA,
+            ENTITY_EFFECT, REMOVE_ENTITY_EFFECT, BLOCK_BREAK_ANIMATION
 
-    // We don't handle DESTROY_ENTITY though
+            // We don't handle DESTROY_ENTITY though
     };
-
-    /**
-     * The current entity visibility policy.
-     *
-     * @author Kristian
-     */
-    public enum Policy {
-        /**
-         * All entities are invisible by default. Only entities specifically
-         * made visible may be seen.
-         */
-        WHITELIST,
-        /**
-         * All entities are visible by default. An entity can only be hidden
-         * explicitly.
-         */
-        BLACKLIST,
-    }
-
-    private ProtocolManager manager;
-
-    // Listeners
-    private Listener bukkitListener;
-    private PacketAdapter protocolListener;
-
     // Current policy
-    protected final Policy policy;
+    private final Policy policy;
+    // Listeners
+    private final Listener bukkitListener;
+    private final PacketAdapter protocolListener;
+    private final Table<Integer, Integer, Boolean> observerEntityMap = HashBasedTable.create();
+    private ProtocolManager manager;
 
     /**
      * Construct a new entity hider.
@@ -96,7 +79,7 @@ public class EntityHider implements Listener {
 
         // Save policy
         this.policy = policy;
-        this.manager = ProtocolLibrary.getProtocolManager();
+        manager = ProtocolLibrary.getProtocolManager();
 
         // Register events and packet listener
         plugin.getServer().getPluginManager().registerEvents(
@@ -110,11 +93,10 @@ public class EntityHider implements Listener {
      *
      * @param observer - the observer player.
      * @param entityID - ID of the entity that will be hidden or made visible.
-     * @param visible - TRUE if the entity should be made visible, FALSE if not.
-     * @return TRUE if the entity was visible before this method call, FALSE
-     * otherwise.
+     * @param visible  - TRUE if the entity should be made visible, FALSE if not.
+     * @return TRUE if the entity was visible before this method call, FALSE otherwise.
      */
-    protected boolean setVisibility(Player observer, int entityID, boolean visible) {
+    private boolean setVisibility(Player observer, int entityID, boolean visible) {
         switch (policy) {
             case BLACKLIST:
                 // Non-membership means they are visible
@@ -131,12 +113,11 @@ public class EntityHider implements Listener {
      *
      * @param observer - the player observer.
      * @param entityID - ID of the entity.
-     * @param member - TRUE if they should be present in the table, FALSE
-     * otherwise.
+     * @param member   - TRUE if they should be present in the table, FALSE otherwise.
      * @return TRUE if they already were present, FALSE otherwise.
      */
     // Helper method
-    protected boolean setMembership(Player observer, int entityID, boolean member) {
+    private boolean setMembership(Player observer, int entityID, boolean member) {
         if (member) {
             return observerEntityMap.put(observer.getEntityId(), entityID, true) != null;
         } else {
@@ -151,7 +132,7 @@ public class EntityHider implements Listener {
      * @param entityID - ID of the entity.
      * @return TRUE if they are present, FALSE otherwise.
      */
-    protected boolean getMembership(Player observer, int entityID) {
+    private boolean getMembership(Player observer, int entityID) {
         return observerEntityMap.contains(observer.getEntityId(), entityID);
     }
 
@@ -162,21 +143,20 @@ public class EntityHider implements Listener {
      * @param entityID - ID of the entity that we are testing for visibility.
      * @return TRUE if the entity is visible, FALSE otherwise.
      */
-    protected boolean isVisible(Player observer, int entityID) {
+    private boolean isVisible(Player observer, int entityID) {
         // If we are using a whitelist, presence means visibility - if not, the opposite is the case
         boolean presence = getMembership(observer, entityID);
 
-        return policy == Policy.WHITELIST ? presence : !presence;
+        return (policy == Policy.WHITELIST) == presence;
     }
 
     /**
      * Remove the given entity from the underlying map.
      *
-     * @param entity - the entity to remove.
-     * @param destroyed - TRUE if the entity was killed, FALSE if it is merely
-     * unloading.
+     * @param entity    - the entity to remove.
+     * @param destroyed - TRUE if the entity was killed, FALSE if it is merely unloading.
      */
-    protected void removeEntity(Entity entity, boolean destroyed) {
+    private void removeEntity(Entity entity, boolean destroyed) {
         int entityID = entity.getEntityId();
 
         for (Map<Integer, Boolean> maps : observerEntityMap.rowMap().values()) {
@@ -189,7 +169,7 @@ public class EntityHider implements Listener {
      *
      * @param player - the player that jused logged out.
      */
-    protected void removePlayer(Player player) {
+    private void removePlayer(Player player) {
         // Cleanup
         observerEntityMap.rowMap().remove(player.getEntityId());
     }
@@ -221,14 +201,13 @@ public class EntityHider implements Listener {
     }
 
     /**
-     * Construct the packet listener that will be used to intercept every
-     * entity-related packet.
+     * Construct the packet listener that will be used to intercept every entity-related packet.
      *
      * @param plugin - the parent plugin.
      * @return The packet listener.
      */
     private PacketAdapter constructProtocol(Plugin plugin) {
-        return new PacketAdapter(plugin, ENTITY_PACKETS) {
+        return new PacketAdapter(plugin, EntityHider.ENTITY_PACKETS) {
             @Override
             public void onPacketSending(PacketEvent event) {
                 int entityID = event.getPacket().getIntegers().read(0);
@@ -244,11 +223,10 @@ public class EntityHider implements Listener {
     /**
      * Toggle the visibility status of an entity for a player.
      * <p>
-     * If the entity is visible, it will be hidden. If it is hidden, it will
-     * become visible.
+     * If the entity is visible, it will be hidden. If it is hidden, it will become visible.
      *
      * @param observer - the player observer.
-     * @param entity - the entity to toggle.
+     * @param entity   - the entity to toggle.
      * @return TRUE if the entity was visible before, FALSE otherwise.
      */
     public final boolean toggleEntity(Player observer, Entity entity) {
@@ -263,7 +241,7 @@ public class EntityHider implements Listener {
      * Allow the observer to see an entity that was previously hidden.
      *
      * @param observer - the observer.
-     * @param entity - the entity to show.
+     * @param entity   - the entity to show.
      * @return TRUE if the entity was hidden before, FALSE otherwise.
      */
     public final boolean showEntity(Player observer, Entity entity) {
@@ -281,7 +259,7 @@ public class EntityHider implements Listener {
      * Prevent the observer from seeing a given entity.
      *
      * @param observer - the player observer.
-     * @param entity - the entity to hide.
+     * @param entity   - the entity to hide.
      * @return TRUE if the entity was previously visible, FALSE otherwise.
      */
     public final boolean hideEntity(Player observer, Entity entity) {
@@ -305,14 +283,12 @@ public class EntityHider implements Listener {
     /**
      * Determine if the given entity has been hidden from an observer.
      * <p>
-     * Note that the entity may very well be occluded or out of range from the
-     * perspective of the observer. This method simply checks if an entity has
-     * been completely hidden for that observer.
+     * Note that the entity may very well be occluded or out of range from the perspective of the observer. This method
+     * simply checks if an entity has been completely hidden for that observer.
      *
      * @param observer - the observer.
-     * @param entity - the entity that may be hidden.
-     * @return TRUE if the player may see the entity, FALSE if the entity has
-     * been hidden.
+     * @param entity   - the entity that may be hidden.
+     * @return TRUE if the player may see the entity, FALSE if the entity has been hidden.
      */
     public final boolean canSee(Player observer, Entity entity) {
         validate(observer, entity);
@@ -341,5 +317,21 @@ public class EntityHider implements Listener {
             manager.removePacketListener(protocolListener);
             manager = null;
         }
+    }
+
+    /**
+     * The current entity visibility policy.
+     *
+     * @author Kristian
+     */
+    public enum Policy {
+        /**
+         * All entities are invisible by default. Only entities specifically made visible may be seen.
+         */
+        WHITELIST,
+        /**
+         * All entities are visible by default. An entity can only be hidden explicitly.
+         */
+        BLACKLIST,
     }
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2018 YitanTribal & Beelzebu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@ package cl.mastercode.DamageIndicator.storage;
 import org.bukkit.entity.Player;
 
 /**
- *
  * @author Beelzebu
  */
 public interface StorageProvider {
@@ -29,7 +28,7 @@ public interface StorageProvider {
      * @param player player to check.
      * @return true if the player can see the armor stand, false otherwhise.
      */
-    public boolean showArmorStand(Player player);
+    boolean showArmorStand(Player player);
 
     /**
      * Set the armorstand show status for a player.
@@ -37,6 +36,6 @@ public interface StorageProvider {
      * @param player player to set the status.
      * @param status new status.
      */
-    public void setShowArmorStand(Player player, boolean status);
+    void setShowArmorStand(Player player, boolean status);
 
 }

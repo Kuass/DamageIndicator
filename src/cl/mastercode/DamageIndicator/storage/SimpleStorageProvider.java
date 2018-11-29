@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2018 YitanTribal & Beelzebu
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 /**
- *
  * @author Beelzebu
  */
 public class SimpleStorageProvider implements StorageProvider {

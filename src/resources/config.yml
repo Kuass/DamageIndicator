@@ -3,7 +3,7 @@
 # Issue Tracker: https://github.com/Beelzebu/DamageIndicator/issues
 
 # Config version, don't edit
-version: 2
+version: 3
 
 # Damage Indicator options, here you can define in what type of entities we
 # should show the damage indicators and completely disable this feature.
@@ -21,10 +21,40 @@ Damage Indicator:
     # See https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html
     # for more information.
     Decimal: '#.##'
+  # Distance in Y axis from the entity where we should spawn the damage indicator
+  # A distance of 2 is recommended for 1.8 servers
+  Distance: 1.6
+  # List of disabled entity types that shouldn't spawn damage indicators
+  # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
+  # for all possible entities.
+  Disabled Entities:
+  - GHAST
+  - ZOMBIE
+  - IRON_GOLEM
+  # List of spawn reasons that we must listen and mark entities so they won't spawn
+  # damage indicators.
+  # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
+  # for all possible spawn reasons.
+  Disabled Reasons:
+  - SPAWNER
 
-# Blood here you can completely disable this feature.
+# Blood options, here you can configure this feature.
 Blood:
   Enabled: true
+  Player: true
+  Monster: true
+  Animals: true
+  # List of disabled entity types that shouldn't bleed.
+  # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
+  # for all possible entities.
+  Disabled Entities:
+  - ZOMBIE
+  - SKELETON
+  # List of spawn reasons that we must listen and mark entities so they won't bleed.
+  # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
+  # for all possible spawn reasons.
+  Disabled Reasons:
+  - SPAWNER
 
 Messages:
   Damage Indicator:
