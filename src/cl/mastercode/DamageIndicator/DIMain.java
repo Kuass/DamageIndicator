@@ -95,7 +95,7 @@ public class DIMain extends JavaPlugin {
     }
 
     private void updateConfig() {
-        if (getConfig().getInt("version", 1) != 2) {
+        if (getConfig().getInt("version", 1) < 2) {
             List<String> lines = Arrays.asList(
                     "# DamageIndicator Reborn, Minecraft plugin to show the damage taken by a entity",
                     "# Source Code: https://github.com/Beelzebu/DamageIndicator",
@@ -133,7 +133,7 @@ public class DIMain extends JavaPlugin {
                 Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, "Can't save config v2", ex);
             }
         }
-        if (getConfig().getInt("version", 2) != 3) {
+        if (getConfig().getInt("version", 2) < 3) {
             List<String> lines = Arrays.asList(
                     "# DamageIndicator Reborn, Minecraft plugin to show the damage taken by a entity",
                     "# Source Code: https://github.com/Beelzebu/DamageIndicator",

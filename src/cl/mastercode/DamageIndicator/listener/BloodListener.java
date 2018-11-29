@@ -135,7 +135,7 @@ public class BloodListener implements Listener {
         } else {
             if (playEffect != null) {
                 try {
-                    playEffect.invoke(e.getEntity().getWorld(), ((LivingEntity) e.getEntity()).getEyeLocation(), Effect.valueOf("COLOURED_DUST"), 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
+                    playEffect.invoke(e.getEntity().getWorld().spigot(), ((LivingEntity) e.getEntity()).getEyeLocation(), Effect.valueOf("COLOURED_DUST"), 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
                 } catch (ReflectiveOperationException e1) {
                     e1.printStackTrace();
                 }
@@ -222,9 +222,6 @@ public class BloodListener implements Listener {
         if (entity instanceof Animals && !enableAnimal) {
             return false;
         }
-        if (disabledEntities.contains(entity.getType())) {
-            return false;
-        }
-        return true;
+        return !disabledEntities.contains(entity.getType());
     }
 }
