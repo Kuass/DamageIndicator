@@ -78,6 +78,20 @@ public class BloodListener implements Listener {
         enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
         enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
+        if (!CompatUtil.is113()) {
+            try {
+                playEffect = World.Spigot.class.getMethod("playEffect", Location.class, Effect.class, int.class, int.class, float.class, float.class, float.class, float.class, int.class, int.class);
+            } catch (ReflectiveOperationException e) {
+                e.printStackTrace();
+            }
+        } else {
+            playEffect = null;
+        }
+    }
+
+    public void reload() {
+        disabledEntities.clear();
+        disabledSpawnReasons.clear();
         plugin.getConfig().getStringList("Blood.Disabled Entities").stream().map(entity -> {
             try {
                 return EntityType.valueOf(entity.toUpperCase());
@@ -92,15 +106,6 @@ public class BloodListener implements Listener {
                 return null;
             }
         }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
-        if (!CompatUtil.is113()) {
-            try {
-                playEffect = World.Spigot.class.getMethod("playEffect", Location.class, Effect.class, int.class, int.class, float.class, float.class, float.class, int.class, int.class, int.class);
-            } catch (ReflectiveOperationException e) {
-                e.printStackTrace();
-            }
-        } else {
-            playEffect = null;
-        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

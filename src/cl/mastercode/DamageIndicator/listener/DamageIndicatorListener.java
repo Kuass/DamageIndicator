@@ -87,6 +87,25 @@ public class DamageIndicatorListener implements Listener {
         }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
     }
 
+    public void reload() {
+        disabledEntities.clear();
+        disabledSpawnReasons.clear();
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Entities").stream().map(entity -> {
+            try {
+                return EntityType.valueOf(entity.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).forEach(disabledEntities::add);
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Reasons").stream().map(reason -> {
+            try {
+                return CreatureSpawnEvent.SpawnReason.valueOf(reason.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCreatureSpawn(CreatureSpawnEvent e) {
         if (e.isCancelled()) {

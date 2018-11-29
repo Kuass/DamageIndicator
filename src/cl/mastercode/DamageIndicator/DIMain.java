@@ -55,10 +55,12 @@ public class DIMain extends JavaPlugin {
         if (damageIndicatorListener != null) {
             damageIndicatorListener.getArmorStands().forEach((armor, time) -> armor.remove());
             damageIndicatorListener.getArmorStands().clear();
+            damageIndicatorListener.reload();
         }
         if (bloodListener != null) {
             bloodListener.getBloodItems().forEach((item, time) -> item.remove());
             bloodListener.getBloodItems().clear();
+            bloodListener.reload();
         }
         if (!configFile.exists()) {
             saveResource("config.yml", false);
@@ -75,9 +77,11 @@ public class DIMain extends JavaPlugin {
         updateConfig();
         if (getConfig().getBoolean("Damage Indicator.Enabled")) {
             Bukkit.getPluginManager().registerEvents(damageIndicatorListener = new DamageIndicatorListener(this), this);
+            damageIndicatorListener.reload();
         }
         if (getConfig().getBoolean("Blood.Enabled")) {
             Bukkit.getPluginManager().registerEvents(bloodListener = new BloodListener(this), this);
+            bloodListener.reload();
         }
         getCommand("damageindicator").setExecutor(new CommandHandler(this));
         startTasks();
@@ -197,9 +201,9 @@ public class DIMain extends JavaPlugin {
             try {
                 Files.write(configFile.toPath(), lines);
                 reloadConfig();
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&eDamageIndicator config updated to v2."));
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&eDamageIndicator config updated to v3."));
             } catch (IOException ex) {
-                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, "Can't save config v2", ex);
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, "Can't save config v3", ex);
             }
         }
     }
