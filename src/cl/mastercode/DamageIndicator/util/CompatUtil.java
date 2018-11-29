@@ -32,7 +32,7 @@ public final class CompatUtil {
         if (is113()) {
             RED_INK = new ItemStack(Material.ROSE_RED);
         } else {
-            RED_INK = new ItemStack(Material.valueOf("INK_SACK"), 1, (short) 14);
+            RED_INK = new ItemStack(Material.valueOf("INK_SACK"), 1, (short) 1);
         }
     }
 

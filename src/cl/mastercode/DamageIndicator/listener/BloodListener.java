@@ -132,13 +132,17 @@ public class BloodListener implements Listener {
         }
         if (CompatUtil.is113()) {
             e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation(), 7, .5, 1, .5, new Particle.DustOptions(Color.RED, 3f));
-        } else {
-            if (playEffect != null) {
-                try {
+        } else if (CompatUtil.is18()) {
+            try {
+                if (playEffect != null) {
                     playEffect.invoke(e.getEntity().getWorld().spigot(), ((LivingEntity) e.getEntity()).getEyeLocation(), Effect.valueOf("COLOURED_DUST"), 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
-                } catch (ReflectiveOperationException e1) {
-                    e1.printStackTrace();
                 }
+            } catch (ReflectiveOperationException e1) {
+                e1.printStackTrace();
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+                e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation().clone().add(random.nextDouble(), random.nextDouble(), random.nextDouble()), 0, 255, 0, 0, 1);
             }
         }
     }
