@@ -68,13 +68,15 @@ public class BloodListener implements Listener {
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
     private final Random random = new Random();
-    private final boolean enablePlayer;
-    private final boolean enableMonster;
-    private final boolean enableAnimal;
+    private boolean enabled;
+    private boolean enablePlayer;
+    private boolean enableMonster;
+    private boolean enableAnimal;
     private Method playEffect;
 
     public BloodListener(DIMain plugin) {
         this.plugin = plugin;
+        enabled = plugin.getConfig().getBoolean("Blood.Enabled");
         enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
         enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
@@ -92,6 +94,10 @@ public class BloodListener implements Listener {
     public void reload() {
         disabledEntities.clear();
         disabledSpawnReasons.clear();
+        enabled = plugin.getConfig().getBoolean("Blood.Enabled");
+        enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
+        enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
+        enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
         plugin.getConfig().getStringList("Blood.Disabled Entities").stream().map(entity -> {
             try {
                 return EntityType.valueOf(entity.toUpperCase());
@@ -224,6 +230,9 @@ public class BloodListener implements Listener {
             return false;
         }
         if (entity instanceof Animals && !enableAnimal) {
+            return false;
+        }
+        if (!enabled) {
             return false;
         }
         return !disabledEntities.contains(entity.getType());

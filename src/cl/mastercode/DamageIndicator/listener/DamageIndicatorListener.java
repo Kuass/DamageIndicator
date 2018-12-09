@@ -58,13 +58,15 @@ public class DamageIndicatorListener implements Listener {
     private final Map<ArmorStand, Long> armorStands = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
-    private final boolean enablePlayer;
-    private final boolean enableMonster;
-    private final boolean enableAnimal;
+    private boolean enabled;
+    private boolean enablePlayer;
+    private boolean enableMonster;
+    private boolean enableAnimal;
     private EntityHider hider;
 
     public DamageIndicatorListener(DIMain plugin) {
         this.plugin = plugin;
+        enabled = plugin.getConfig().getBoolean("Damage Indicator.Enabled");
         enablePlayer = plugin.getConfig().getBoolean("Damage Indicator.Player");
         enableMonster = plugin.getConfig().getBoolean("Damage Indicator.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
@@ -88,6 +90,10 @@ public class DamageIndicatorListener implements Listener {
     }
 
     public void reload() {
+        enabled = plugin.getConfig().getBoolean("Damage Indicator.Enabled");
+        enablePlayer = plugin.getConfig().getBoolean("Damage Indicator.Player");
+        enableMonster = plugin.getConfig().getBoolean("Damage Indicator.Monster");
+        enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
         disabledEntities.clear();
         disabledSpawnReasons.clear();
         plugin.getConfig().getStringList("Damage Indicator.Disabled Entities").stream().map(entity -> {
@@ -224,6 +230,9 @@ public class DamageIndicatorListener implements Listener {
             return false;
         }
         if (entity instanceof Animals && !enableAnimal) {
+            return false;
+        }
+        if (!enabled) {
             return false;
         }
         return !disabledEntities.contains(entity.getType());

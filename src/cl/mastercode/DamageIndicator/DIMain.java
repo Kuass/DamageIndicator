@@ -52,37 +52,35 @@ public class DIMain extends JavaPlugin {
     private StorageProvider storageProvider = null;
 
     public void reload() {
+        if (!configFile.exists()) {
+            saveResource("config.yml", false);
+        }
+        updateConfig();
+        reloadConfig();
+        if (storageProvider == null) {
+            storageProvider = new SimpleStorageProvider();
+        }
         if (damageIndicatorListener != null) {
             damageIndicatorListener.getArmorStands().forEach((armor, time) -> armor.remove());
             damageIndicatorListener.getArmorStands().clear();
+            damageIndicatorListener.reload();
+        } else if (getConfig().getBoolean("Damage Indicator.Enabled")) {
+            Bukkit.getPluginManager().registerEvents(damageIndicatorListener = new DamageIndicatorListener(this), this);
             damageIndicatorListener.reload();
         }
         if (bloodListener != null) {
             bloodListener.getBloodItems().forEach((item, time) -> item.remove());
             bloodListener.getBloodItems().clear();
             bloodListener.reload();
+        } else if (getConfig().getBoolean("Blood.Enabled")) {
+            Bukkit.getPluginManager().registerEvents(bloodListener = new BloodListener(this), this);
+            bloodListener.reload();
         }
-        if (!configFile.exists()) {
-            saveResource("config.yml", false);
-        }
-        if (storageProvider == null) {
-            storageProvider = new SimpleStorageProvider();
-        }
-        reloadConfig();
     }
 
     @Override
     public void onEnable() {
         reload();
-        updateConfig();
-        if (getConfig().getBoolean("Damage Indicator.Enabled")) {
-            Bukkit.getPluginManager().registerEvents(damageIndicatorListener = new DamageIndicatorListener(this), this);
-            damageIndicatorListener.reload();
-        }
-        if (getConfig().getBoolean("Blood.Enabled")) {
-            Bukkit.getPluginManager().registerEvents(bloodListener = new BloodListener(this), this);
-            bloodListener.reload();
-        }
         getCommand("damageindicator").setExecutor(new CommandHandler(this));
         startTasks();
         CompatUtil.onEnable();
@@ -90,8 +88,12 @@ public class DIMain extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        damageIndicatorListener.getArmorStands().forEach((armor, time) -> armor.remove());
-        bloodListener.getBloodItems().forEach((item, time) -> item.remove());
+        if (damageIndicatorListener != null) {
+            damageIndicatorListener.getArmorStands().forEach((armor, time) -> armor.remove());
+        }
+        if (bloodListener != null) {
+            bloodListener.getBloodItems().forEach((item, time) -> item.remove());
+        }
     }
 
     private void updateConfig() {
@@ -210,22 +212,26 @@ public class DIMain extends JavaPlugin {
 
     private void startTasks() {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            Iterator<Map.Entry<ArmorStand, Long>> asit = damageIndicatorListener.getArmorStands().entrySet().iterator();
-            while (asit.hasNext()) {
-                Map.Entry<ArmorStand, Long> ent = asit.next();
-                if (ent.getValue() + 1500 <= System.currentTimeMillis()) {
-                    ent.getKey().remove();
-                    asit.remove();
-                } else {
-                    ent.getKey().teleport(ent.getKey().getLocation().clone().add(0.0, 0.07, 0.0));
+            if (damageIndicatorListener != null) {
+                Iterator<Map.Entry<ArmorStand, Long>> asit = damageIndicatorListener.getArmorStands().entrySet().iterator();
+                while (asit.hasNext()) {
+                    Map.Entry<ArmorStand, Long> ent = asit.next();
+                    if (ent.getValue() + 1500 <= System.currentTimeMillis()) {
+                        ent.getKey().remove();
+                        asit.remove();
+                    } else {
+                        ent.getKey().teleport(ent.getKey().getLocation().clone().add(0.0, 0.07, 0.0));
+                    }
                 }
             }
-            Iterator<Map.Entry<Item, Long>> bit = bloodListener.getBloodItems().entrySet().iterator();
-            while (bit.hasNext()) {
-                Map.Entry<Item, Long> ent = bit.next();
-                if (ent.getValue() + 2000 <= System.currentTimeMillis()) {
-                    ent.getKey().remove();
-                    bit.remove();
+            if (bloodListener != null) {
+                Iterator<Map.Entry<Item, Long>> bit = bloodListener.getBloodItems().entrySet().iterator();
+                while (bit.hasNext()) {
+                    Map.Entry<Item, Long> ent = bit.next();
+                    if (ent.getValue() + 2000 <= System.currentTimeMillis()) {
+                        ent.getKey().remove();
+                        bit.remove();
+                    }
                 }
             }
         }, 0, 1);
