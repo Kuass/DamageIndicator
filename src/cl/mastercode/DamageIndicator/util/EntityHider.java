@@ -210,8 +210,10 @@ public class EntityHider implements Listener {
         return new PacketAdapter(plugin, EntityHider.ENTITY_PACKETS) {
             @Override
             public void onPacketSending(PacketEvent event) {
+                if (event.isPlayerTemporary()) {
+                    return;
+                }
                 int entityID = event.getPacket().getIntegers().read(0);
-
                 // See if this packet should be cancelled
                 if (!isVisible(event.getPlayer(), entityID)) {
                     event.setCancelled(true);

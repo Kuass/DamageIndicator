@@ -43,6 +43,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -122,6 +123,13 @@ public class DamageIndicatorListener implements Listener {
         }
         if (disabledSpawnReasons.contains(e.getSpawnReason())) {
             e.getEntity().setMetadata(DISABLED_DI, new FixedMetadataValue(plugin, 1));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void oneEntitySpawn(EntitySpawnEvent e) {
+        if (e.getEntity() instanceof ArmorStand && armorStands.containsKey(e.getEntity())) {
+            e.setCancelled(false);
         }
     }
 
