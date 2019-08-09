@@ -15,6 +15,8 @@
  */
 package cl.mastercode.DamageIndicator.util;
 
+import cl.mastercode.DamageIndicator.DIMain;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.inventory.ItemStack;
@@ -29,8 +31,12 @@ public final class CompatUtil {
     public static ItemStack RED_INK = null;
 
     public static void onEnable() {
-        if (is113()) {
-            RED_INK = new ItemStack(Material.ROSE_RED);
+        if (is113orHigher()) {
+            if (getMinorVersion() == 13) {
+                RED_INK = new ItemStack(Material.valueOf("ROSE_RED"));
+            } else {
+                RED_INK = new ItemStack(Material.RED_DYE);
+            }
         } else {
             RED_INK = new ItemStack(Material.valueOf("INK_SACK"), 1, (short) 1);
         }
@@ -46,17 +52,22 @@ public final class CompatUtil {
         }
     }
 
-    public static boolean is113() {
+    public static boolean is113orHigher() {
+        return getMinorVersion() > 13;
+    }
+
+    private static int getMinorVersion() {
+        String ver = Bukkit.getServer().getClass().getPackage().getName().substring(Bukkit.getServer().getClass().getPackage().getName().lastIndexOf(".") + 1);
+        int verInt = -1;
         try {
-            try {
-                Class.forName("org.bukkit.Particle$DustOptions");
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
-            Material.valueOf("ROSE_RED");
-            return true;
+            verInt = Integer.parseInt(ver.split("_")[1]);
         } catch (IllegalArgumentException e) {
-            return false;
+            Bukkit.getScheduler().runTask(DIMain.getPlugin(DIMain.class), () -> {
+                DIMain.getPlugin(DIMain.class).getLogger().warning("An error occurred getting server version, please contact developer.");
+                DIMain.getPlugin(DIMain.class).getLogger().warning("Detected version " + ver);
+                Bukkit.getPluginManager().disablePlugin(DIMain.getPlugin(DIMain.class));
+            });
         }
+        return verInt;
     }
 }

@@ -40,6 +40,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Slime;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -80,7 +81,7 @@ public class BloodListener implements Listener {
         enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
         enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
-        if (!CompatUtil.is113()) {
+        if (!CompatUtil.is113orHigher()) {
             try {
                 playEffect = World.Spigot.class.getMethod("playEffect", Location.class, Effect.class, int.class, int.class, float.class, float.class, float.class, float.class, int.class, int.class);
             } catch (ReflectiveOperationException e) {
@@ -132,11 +133,14 @@ public class BloodListener implements Listener {
         if (e.isCancelled()) {
             return;
         }
+        if (e.getFinalDamage() <= 0) {
+            return;
+        }
         Entity entity = e.getEntity();
         if (!showBlood(entity)) {
             return;
         }
-        if (CompatUtil.is113()) {
+        if (CompatUtil.is113orHigher()) {
             e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation(), 7, .5, 1, .5, new Particle.DustOptions(Color.RED, 3f));
         } else if (CompatUtil.is18()) {
             try {
@@ -155,31 +159,17 @@ public class BloodListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onItemPickup(EntityPickupItemEvent e) {
-        if (bloodItems.containsKey(e.getItem())) {
-            e.setCancelled(true);
-            return;
-        }
-        if (e.getItem().getPickupDelay() == Integer.MAX_VALUE && e.getItem().getItemStack().getItemMeta().hasDisplayName() && e.getItem().getItemStack().getItemMeta().getDisplayName().startsWith(BLOOD_NAME)) {
-            e.getItem().remove();
-        }
+        checkBloodItem(e.getItem(), e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onItemPickup(PlayerPickupItemEvent e) {
-        if (bloodItems.containsKey(e.getItem())) {
-            e.setCancelled(true);
-            return;
-        }
-        if (e.getItem().getPickupDelay() == Integer.MAX_VALUE && e.getItem().getItemStack().getItemMeta().hasDisplayName() && e.getItem().getItemStack().getItemMeta().getDisplayName().startsWith(BLOOD_NAME)) {
-            e.getItem().remove();
-        }
+        checkBloodItem(e.getItem(), e);
     }
 
     @EventHandler
     public void onInventoryPickup(InventoryPickupItemEvent e) {
-        if (bloodItems.containsKey(e.getItem())) {
-            e.setCancelled(true);
-        }
+        checkBloodItem(e.getItem(), e);
     }
 
     @EventHandler
@@ -236,5 +226,19 @@ public class BloodListener implements Listener {
             return false;
         }
         return !disabledEntities.contains(entity.getType());
+    }
+
+    private void checkBloodItem(Item item, Cancellable cancellable) {
+        if (bloodItems.containsKey(item)) {
+            cancellable.setCancelled(true);
+            return;
+        }
+        ItemStack itemStack = item.getItemStack();
+        if (item.getPickupDelay() == Integer.MAX_VALUE && itemStack.hasItemMeta()) {
+            ItemMeta itemMeta = itemStack.getItemMeta();
+            if (itemMeta.hasDisplayName() && itemMeta.getDisplayName().equals(BLOOD_NAME)) {
+                item.remove();
+            }
+        }
     }
 }

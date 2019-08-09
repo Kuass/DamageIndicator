@@ -22,22 +22,7 @@
             <id>dmulloy2-repo</id>
             <url>http://repo.dmulloy2.net/nexus/repository/public/</url>
         </repository>
-        <repository>
-            <id>nifheim-repo</id>
-            <url>https://repo.nifheim.net/repository/public/</url>
-        </repository>
     </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>nifheim-repo</id>
-            <url>https://repo.nifheim.net/repository/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>nifheim-repo</id>
-            <url>https://repo.nifheim.net/repository/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -49,7 +34,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.13.2-R0.1-SNAPSHOT</version>
+            <version>1.14.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
