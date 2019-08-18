@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.Getter;
 import org.bukkit.Color;
 import org.bukkit.Effect;
@@ -68,19 +70,17 @@ public class BloodListener implements Listener {
     private final Map<Item, Long> bloodItems = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
+    private final Set<EntityDamageEvent.DamageCause> disabledDamageCauses = new HashSet<>();
     private final Random random = new Random();
-    private boolean enabled;
-    private boolean enablePlayer;
-    private boolean enableMonster;
-    private boolean enableAnimal;
+    private boolean enabled = true;
+    private boolean enablePlayer = true;
+    private boolean enableMonster = true;
+    private boolean enableAnimal = true;
+    private boolean sneaking = true;
     private Method playEffect;
 
     public BloodListener(DIMain plugin) {
         this.plugin = plugin;
-        enabled = plugin.getConfig().getBoolean("Blood.Enabled");
-        enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
-        enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
-        enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
         if (!CompatUtil.is113orHigher()) {
             try {
                 playEffect = World.Spigot.class.getMethod("playEffect", Location.class, Effect.class, int.class, int.class, float.class, float.class, float.class, float.class, int.class, int.class);
@@ -90,6 +90,7 @@ public class BloodListener implements Listener {
         } else {
             playEffect = null;
         }
+        reload();
     }
 
     public void reload() {
@@ -99,20 +100,31 @@ public class BloodListener implements Listener {
         enablePlayer = plugin.getConfig().getBoolean("Blood.Player");
         enableMonster = plugin.getConfig().getBoolean("Blood.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Blood.Animals");
+        sneaking = plugin.getConfig().getBoolean("Blood.Sneaking");
         plugin.getConfig().getStringList("Blood.Disabled Entities").stream().map(entity -> {
             try {
                 return EntityType.valueOf(entity.toUpperCase());
             } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, entity.toUpperCase() + " is not a valid EntityType.");
                 return null;
             }
         }).filter(Objects::nonNull).forEach(disabledEntities::add);
-        plugin.getConfig().getStringList("Blood.Disabled Reasons").stream().map(reason -> {
+        plugin.getConfig().getStringList("Blood.Disabled Spawn Reasons").stream().map(reason -> {
             try {
                 return CreatureSpawnEvent.SpawnReason.valueOf(reason.toUpperCase());
             } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, reason.toUpperCase() + " is not a valid SpawnReason.");
                 return null;
             }
         }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
+        plugin.getConfig().getStringList("Blood.Disabled Damage Causes").stream().map(cause -> {
+            try {
+                return EntityDamageEvent.DamageCause.valueOf(cause);
+            } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, cause.toUpperCase() + " is not a valid DamageCause.");
+                return null;
+            }
+        }).filter(Objects::nonNull).forEach(disabledDamageCauses::add);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -120,7 +132,7 @@ public class BloodListener implements Listener {
         if (e.isCancelled()) {
             return;
         }
-        if (!showBlood(e.getEntity())) {
+        if (!showBlood(e.getEntity(), null, .1)) {
             return;
         }
         if (disabledSpawnReasons.contains(e.getSpawnReason())) {
@@ -133,11 +145,8 @@ public class BloodListener implements Listener {
         if (e.isCancelled()) {
             return;
         }
-        if (e.getFinalDamage() <= 0) {
-            return;
-        }
         Entity entity = e.getEntity();
-        if (!showBlood(entity)) {
+        if (!showBlood(entity, e.getCause(), e.getFinalDamage())) {
             return;
         }
         if (CompatUtil.is113orHigher()) {
@@ -174,7 +183,7 @@ public class BloodListener implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent e) {
-        if (!showBlood(e.getEntity())) {
+        if (!showBlood(e.getEntity(), e.getEntity().getLastDamageCause() != null ? e.getEntity().getLastDamageCause().getCause() : null, .1)) {
             return;
         }
         for (int i = 0; i < 3; i++) {
@@ -200,7 +209,13 @@ public class BloodListener implements Listener {
         }
     }
 
-    private boolean showBlood(Entity entity) {
+    private boolean showBlood(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
+        if (!enabled) {
+            return false;
+        }
+        if (damage <= 0) {
+            return false;
+        }
         if (!(entity instanceof LivingEntity)) {
             return false;
         }
@@ -213,8 +228,14 @@ public class BloodListener implements Listener {
         if (entity instanceof ArmorStand) {
             return false;
         }
-        if (entity instanceof Player && !enablePlayer) {
-            return false;
+        if (entity instanceof Player) {
+            if (!enablePlayer) {
+                return false;
+            }
+            Player player = (Player) entity;
+            if (player.isSneaking() && !sneaking) {
+                return false;
+            }
         }
         if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
             return false;
@@ -222,10 +243,10 @@ public class BloodListener implements Listener {
         if (entity instanceof Animals && !enableAnimal) {
             return false;
         }
-        if (!enabled) {
+        if (disabledEntities.contains(entity.getType())) {
             return false;
         }
-        return !disabledEntities.contains(entity.getType());
+        return !disabledDamageCauses.contains(damageCause);
     }
 
     private void checkBloodItem(Item item, Cancellable cancellable) {

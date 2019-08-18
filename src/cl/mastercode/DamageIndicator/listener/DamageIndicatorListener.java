@@ -25,6 +25,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -59,18 +61,27 @@ public class DamageIndicatorListener implements Listener {
     private final Map<ArmorStand, Long> armorStands = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
-    private boolean enabled;
-    private boolean enablePlayer;
-    private boolean enableMonster;
-    private boolean enableAnimal;
+    private final Set<EntityDamageEvent.DamageCause> disabledDamageCauses = new HashSet<>();
+    private boolean enabled = true;
+    private boolean enablePlayer = true;
+    private boolean enableMonster = true;
+    private boolean enableAnimal = true;
+    private boolean sneaking = false;
     private EntityHider hider;
 
     public DamageIndicatorListener(DIMain plugin) {
         this.plugin = plugin;
+        reload();
+    }
+
+    public void reload() {
+        disabledEntities.clear();
+        disabledSpawnReasons.clear();
         enabled = plugin.getConfig().getBoolean("Damage Indicator.Enabled");
         enablePlayer = plugin.getConfig().getBoolean("Damage Indicator.Player");
         enableMonster = plugin.getConfig().getBoolean("Damage Indicator.Monster");
         enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
+        sneaking = plugin.getConfig().getBoolean("Damage Indicator.Sneaking");
         if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
             hider = new EntityHider(plugin, Policy.BLACKLIST);
         }
@@ -78,39 +89,26 @@ public class DamageIndicatorListener implements Listener {
             try {
                 return EntityType.valueOf(entity.toUpperCase());
             } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, entity.toUpperCase() + " is not a valid EntityType.");
                 return null;
             }
         }).filter(Objects::nonNull).forEach(disabledEntities::add);
-        plugin.getConfig().getStringList("Damage Indicator.Disabled Reasons").stream().map(reason -> {
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Spawn Reasons").stream().map(reason -> {
             try {
                 return CreatureSpawnEvent.SpawnReason.valueOf(reason.toUpperCase());
             } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, reason.toUpperCase() + " is not a valid SpawnReason.");
                 return null;
             }
         }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
-    }
-
-    public void reload() {
-        enabled = plugin.getConfig().getBoolean("Damage Indicator.Enabled");
-        enablePlayer = plugin.getConfig().getBoolean("Damage Indicator.Player");
-        enableMonster = plugin.getConfig().getBoolean("Damage Indicator.Monster");
-        enableAnimal = plugin.getConfig().getBoolean("Damage Indicator.Animals");
-        disabledEntities.clear();
-        disabledSpawnReasons.clear();
-        plugin.getConfig().getStringList("Damage Indicator.Disabled Entities").stream().map(entity -> {
+        plugin.getConfig().getStringList("Damage Indicator.Disabled Damage Causes").stream().map(cause -> {
             try {
-                return EntityType.valueOf(entity.toUpperCase());
+                return EntityDamageEvent.DamageCause.valueOf(cause);
             } catch (IllegalArgumentException e) {
+                Logger.getLogger(DIMain.class.getName()).log(Level.WARNING, cause.toUpperCase() + " is not a valid DamageCause.");
                 return null;
             }
-        }).filter(Objects::nonNull).forEach(disabledEntities::add);
-        plugin.getConfig().getStringList("Damage Indicator.Disabled Reasons").stream().map(reason -> {
-            try {
-                return CreatureSpawnEvent.SpawnReason.valueOf(reason.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
-        }).filter(Objects::nonNull).forEach(disabledSpawnReasons::add);
+        }).filter(Objects::nonNull).forEach(disabledDamageCauses::add);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -118,7 +116,7 @@ public class DamageIndicatorListener implements Listener {
         if (e.isCancelled()) {
             return;
         }
-        if (!spawnArmorStand(e.getEntity())) {
+        if (!spawnArmorStand(e.getEntity(), null, .1)) {
             return;
         }
         if (disabledSpawnReasons.contains(e.getSpawnReason())) {
@@ -164,8 +162,14 @@ public class DamageIndicatorListener implements Listener {
         if (!(e.getEntity() instanceof LivingEntity)) {
             return;
         }
+        if (e.getEntity() instanceof Player) {
+            Player player = (Player) e.getEntity();
+            if (player.isSneaking() && !sneaking) {
+                return;
+            }
+        }
         if (!e.isCancelled()) {
-            handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityRegain").replace("%health%", damageFormat(e.getAmount()))));
+            handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityRegain").replace("%health%", damageFormat(e.getAmount()))), null, e.getAmount());
         }
     }
 
@@ -175,7 +179,7 @@ public class DamageIndicatorListener implements Listener {
             return;
         }
         if (!e.isCancelled()) {
-            handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityDamage").replace("%damage%", damageFormat(e.getFinalDamage()))));
+            handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityDamage").replace("%damage%", damageFormat(e.getFinalDamage()))), e.getCause(), e.getFinalDamage());
         }
     }
 
@@ -189,8 +193,8 @@ public class DamageIndicatorListener implements Listener {
         return df.format(damage);
     }
 
-    private void handleArmorStand(LivingEntity entity, String format) {
-        if (!spawnArmorStand(entity)) {
+    private void handleArmorStand(LivingEntity entity, String format, EntityDamageEvent.DamageCause damageCause, double damage) {
+        if (!spawnArmorStand(entity, damageCause, damage)) {
             return;
         }
         armorStands.put(getDefaultArmorStand(entity.getLocation(), format), System.currentTimeMillis());
@@ -218,7 +222,13 @@ public class DamageIndicatorListener implements Listener {
         return as;
     }
 
-    private boolean spawnArmorStand(Entity entity) {
+    private boolean spawnArmorStand(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
+        if (!enabled) {
+            return false;
+        }
+        if (damage <= 0) {
+            return false;
+        }
         if (entity.hasMetadata("NPC")) {
             return false;
         }
@@ -231,8 +241,14 @@ public class DamageIndicatorListener implements Listener {
         if (entity instanceof ArmorStand) {
             return false;
         }
-        if (entity instanceof Player && !enablePlayer) {
-            return false;
+        if (entity instanceof Player) {
+            if (!enablePlayer) {
+                return false;
+            }
+            Player player = (Player) entity;
+            if (player.isSneaking() && !sneaking) {
+                return false;
+            }
         }
         if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
             return false;
@@ -240,9 +256,9 @@ public class DamageIndicatorListener implements Listener {
         if (entity instanceof Animals && !enableAnimal) {
             return false;
         }
-        if (!enabled) {
+        if (disabledEntities.contains(entity.getType())) {
             return false;
         }
-        return !disabledEntities.contains(entity.getType());
+        return !disabledDamageCauses.contains(damageCause);
     }
 }

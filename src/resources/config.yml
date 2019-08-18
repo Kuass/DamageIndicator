@@ -3,7 +3,7 @@
 # Issue Tracker: https://github.com/Beelzebu/DamageIndicator/issues
 
 # Config version, don't edit
-version: 3
+version: 4
 
 # Damage Indicator options, here you can define in what type of entities we
 # should show the damage indicators and completely disable this feature.
@@ -35,8 +35,17 @@ Damage Indicator:
   # damage indicators.
   # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
   # for all possible spawn reasons.
-  Disabled Reasons:
+  Disabled Spawn Reasons:
   - SPAWNER
+  # List of damage causes that we must ignore for damage indicators.
+  # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/entity/EntityDamageEvent.DamageCause.html
+  # for all possible damage causes.
+  Disabled Damage Causes:
+  - SUICIDE
+  # Enable or disable damage indicators for players who are sneaking, it is recommended to disable for PvP servers.
+  # true: damage indicators are shown even if you're sneaking.
+  # false: damage indicators aren't shown when you're sneaking.
+  Sneaking: false
 
 # Blood options, here you can configure this feature.
 Blood:
@@ -53,8 +62,17 @@ Blood:
   # List of spawn reasons that we must listen and mark entities so they won't bleed.
   # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
   # for all possible spawn reasons.
-  Disabled Reasons:
+  Disabled Spawn Reasons:
   - SPAWNER
+  # List of damage causes that we must ignore for blood.
+  # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/entity/EntityDamageEvent.DamageCause.html
+  # for all possible damage causes.
+  Disabled Damage Causes:
+  - DROWNING
+  # Enable or disable blood particles for players who are sneaking.
+  # true: blood particles are shown even if you're sneaking.
+  # false: blood particles aren't shown when you're sneaking.
+  Sneaking: true
 
 Messages:
   Damage Indicator:
