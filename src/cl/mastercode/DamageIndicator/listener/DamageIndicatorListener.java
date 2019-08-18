@@ -124,7 +124,7 @@ public class DamageIndicatorListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void oneEntitySpawn(EntitySpawnEvent e) {
         if (e.getEntity() instanceof ArmorStand && armorStands.containsKey(e.getEntity())) {
             e.setCancelled(false);
