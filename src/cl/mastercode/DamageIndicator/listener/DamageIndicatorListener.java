@@ -31,6 +31,7 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -167,6 +168,9 @@ public class DamageIndicatorListener implements Listener {
             if (player.isSneaking() && !sneaking) {
                 return;
             }
+        }
+        if (((LivingEntity) e.getEntity()).getHealth() == ((LivingEntity) e.getEntity()).getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
+            return;
         }
         if (!e.isCancelled()) {
             handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityRegain").replace("%health%", damageFormat(e.getAmount()))), null, e.getAmount());
