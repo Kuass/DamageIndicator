@@ -16,7 +16,6 @@
 package cl.mastercode.DamageIndicator.command;
 
 import cl.mastercode.DamageIndicator.DIMain;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -29,10 +28,13 @@ import org.bukkit.entity.Player;
 /**
  * @author YitanTribal
  */
-@RequiredArgsConstructor
 public final class CommandHandler implements CommandExecutor {
 
     private final DIMain plugin;
+
+    public CommandHandler(DIMain plugin) {
+        this.plugin = plugin;
+    }
 
     private boolean isPlayer(CommandSender sender) {
         if (sender instanceof Player) {

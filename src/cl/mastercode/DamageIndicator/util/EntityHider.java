@@ -1,26 +1,6 @@
 package cl.mastercode.DamageIndicator.util;
 
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Map;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.plugin.Plugin;
 import static com.comphenix.protocol.PacketType.Play.Server.ANIMATION;
 import static com.comphenix.protocol.PacketType.Play.Server.ATTACH_ENTITY;
 import static com.comphenix.protocol.PacketType.Play.Server.BLOCK_BREAK_ANIMATION;
@@ -42,6 +22,26 @@ import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_EXPERIENCE_ORB;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_LIVING;
 import static com.comphenix.protocol.PacketType.Play.Server.SPAWN_ENTITY_PAINTING;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Map;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.plugin.Plugin;
 
 /**
  * Original source: https://gist.github.com/aadnk/5871793

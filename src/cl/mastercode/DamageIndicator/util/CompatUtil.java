@@ -29,10 +29,12 @@ import org.bukkit.inventory.ItemStack;
 public final class CompatUtil {
 
     public static ItemStack RED_INK = null;
+    public static int MINOR_VERSION = 8;
 
     public static void onEnable() {
-        if (is113orHigher()) {
-            if (getMinorVersion() == 13) {
+        MINOR_VERSION = getMinorVersion();
+        if (MINOR_VERSION >= 13) {
+            if (MINOR_VERSION == 13) {
                 RED_INK = new ItemStack(Material.valueOf("ROSE_RED"));
             } else {
                 RED_INK = new ItemStack(Material.RED_DYE);
@@ -42,13 +44,13 @@ public final class CompatUtil {
         }
     }
 
-    public static boolean is18() {
+    public static boolean isCanSetCollidable() {
         try {
             ArmorStand.class.getMethod("setCollidable", boolean.class);
-            return false;
-        } catch (ReflectiveOperationException ex) {
-            ex.printStackTrace();
             return true;
+        } catch (NoSuchMethodException ex) {
+            ex.printStackTrace();
+            return false;
         }
     }
 

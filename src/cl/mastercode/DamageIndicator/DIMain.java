@@ -24,8 +24,6 @@ import cl.mastercode.DamageIndicator.util.CompatUtil;
 import cl.mastercode.DamageIndicator.util.ConfigUpdateHandler;
 import java.util.Iterator;
 import java.util.Map;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -39,8 +37,6 @@ public class DIMain extends JavaPlugin {
 
     private DamageIndicatorListener damageIndicatorListener;
     private BloodListener bloodListener;
-    @Getter
-    @Setter
     private StorageProvider storageProvider = null;
 
     public void reload() {
@@ -120,5 +116,13 @@ public class DIMain extends JavaPlugin {
         }
         ArmorStand as = (ArmorStand) entity;
         return as.hasMetadata("Mastercode-DamageIndicator") || !strict && (as.isMarker() && !as.isVisible() && as.isCustomNameVisible() && !as.hasGravity());
+    }
+
+    public StorageProvider getStorageProvider() {
+        return storageProvider;
+    }
+
+    public void setStorageProvider(StorageProvider storageProvider) {
+        this.storageProvider = storageProvider;
     }
 }

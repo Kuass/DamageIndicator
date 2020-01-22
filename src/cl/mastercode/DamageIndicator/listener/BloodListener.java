@@ -17,6 +17,7 @@ package cl.mastercode.DamageIndicator.listener;
 
 import cl.mastercode.DamageIndicator.DIMain;
 import cl.mastercode.DamageIndicator.util.CompatUtil;
+import cl.mastercode.DamageIndicator.util.ConfigUtil;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -26,22 +27,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import lombok.Getter;
 import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
-import org.bukkit.entity.Animals;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -66,7 +61,6 @@ public class BloodListener implements Listener {
     private static final String BLOOD_NAME = "di-blood";
     private static final String DISABLED_BLOOD = "DI-DISABLED-BLOOD";
     private final DIMain plugin;
-    @Getter
     private final Map<Item, Long> bloodItems = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
@@ -151,7 +145,7 @@ public class BloodListener implements Listener {
         }
         if (CompatUtil.is113orHigher()) {
             e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation(), 7, .5, 1, .5, new Particle.DustOptions(Color.RED, 3f));
-        } else if (CompatUtil.is18()) {
+        } else if (CompatUtil.MINOR_VERSION == 8) {
             try {
                 if (playEffect != null) {
                     playEffect.invoke(e.getEntity().getWorld().spigot(), ((LivingEntity) e.getEntity()).getEyeLocation(), Effect.valueOf("COLOURED_DUST"), 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
@@ -210,43 +204,7 @@ public class BloodListener implements Listener {
     }
 
     private boolean showBlood(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
-        if (!enabled) {
-            return false;
-        }
-        if (damage <= 0) {
-            return false;
-        }
-        if (!(entity instanceof LivingEntity)) {
-            return false;
-        }
-        if (entity.hasMetadata("NPC")) {
-            return false;
-        }
-        if (entity.hasMetadata(DISABLED_BLOOD)) {
-            return false;
-        }
-        if (entity instanceof ArmorStand) {
-            return false;
-        }
-        if (entity instanceof Player) {
-            if (!enablePlayer) {
-                return false;
-            }
-            Player player = (Player) entity;
-            if (player.isSneaking() && !sneaking) {
-                return false;
-            }
-        }
-        if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
-            return false;
-        }
-        if (entity instanceof Animals && !enableAnimal) {
-            return false;
-        }
-        if (disabledEntities.contains(entity.getType())) {
-            return false;
-        }
-        return !disabledDamageCauses.contains(damageCause);
+        return ConfigUtil.isShowIndicator(entity, damageCause, damage, DISABLED_BLOOD, enabled, enablePlayer, sneaking, enableMonster, enableAnimal, disabledEntities, disabledDamageCauses);
     }
 
     private void checkBloodItem(Item item, Cancellable cancellable) {
@@ -261,5 +219,9 @@ public class BloodListener implements Listener {
                 item.remove();
             }
         }
+    }
+
+    public Map<Item, Long> getBloodItems() {
+        return bloodItems;
     }
 }

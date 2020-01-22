@@ -17,6 +17,7 @@ package cl.mastercode.DamageIndicator.listener;
 
 import cl.mastercode.DamageIndicator.DIMain;
 import cl.mastercode.DamageIndicator.util.CompatUtil;
+import cl.mastercode.DamageIndicator.util.ConfigUtil;
 import cl.mastercode.DamageIndicator.util.EntityHider;
 import cl.mastercode.DamageIndicator.util.EntityHider.Policy;
 import java.text.DecimalFormat;
@@ -27,19 +28,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -58,7 +55,6 @@ public class DamageIndicatorListener implements Listener {
 
     private static final String DISABLED_DI = "DI-DISABLED-DI";
     private final DIMain plugin;
-    @Getter
     private final Map<ArmorStand, Long> armorStands = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
@@ -115,6 +111,9 @@ public class DamageIndicatorListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCreatureSpawn(CreatureSpawnEvent e) {
         if (e.isCancelled()) {
+            if (plugin.isDamageIndicator(e.getEntity())) {
+                e.setCancelled(false);
+            }
             return;
         }
         if (!spawnArmorStand(e.getEntity(), null, .1)) {
@@ -127,8 +126,10 @@ public class DamageIndicatorListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void oneEntitySpawn(EntitySpawnEvent e) {
-        if (e.getEntity() instanceof ArmorStand && armorStands.containsKey(e.getEntity())) {
-            e.setCancelled(false);
+        if (e.isCancelled() && e.getEntity() instanceof ArmorStand) {
+            if (plugin.isDamageIndicator(e.getEntity())) {
+                e.setCancelled(false);
+            }
         }
     }
 
@@ -190,7 +191,7 @@ public class DamageIndicatorListener implements Listener {
     private String damageFormat(double damage) {
         DecimalFormat df;
         try {
-            df = new DecimalFormat(plugin.getConfig().getString("Damage Indicator.Format.Decimal", "#.##"));
+            df = new DecimalFormat(Objects.requireNonNull(plugin.getConfig().getString("Damage Indicator.Format.Decimal", "#.##")));
         } catch (Exception ex) {
             df = new DecimalFormat("#.##");
         }
@@ -212,7 +213,7 @@ public class DamageIndicatorListener implements Listener {
         as.setRemoveWhenFarAway(true);
         as.setMetadata("Mastercode-DamageIndicator", new FixedMetadataValue(plugin, 1));
         as.setGravity(false);
-        if (!CompatUtil.is18()) {
+        if (CompatUtil.isCanSetCollidable()) {
             as.setCollidable(false);
             as.setInvulnerable(true);
         }
@@ -227,42 +228,10 @@ public class DamageIndicatorListener implements Listener {
     }
 
     private boolean spawnArmorStand(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
-        if (!enabled) {
-            return false;
-        }
-        if (damage <= 0) {
-            return false;
-        }
-        if (entity.hasMetadata("NPC")) {
-            return false;
-        }
-        if (entity.hasMetadata(DISABLED_DI)) {
-            return false;
-        }
-        if (!(entity instanceof LivingEntity)) {
-            return false;
-        }
-        if (entity instanceof ArmorStand) {
-            return false;
-        }
-        if (entity instanceof Player) {
-            if (!enablePlayer) {
-                return false;
-            }
-            Player player = (Player) entity;
-            if (player.isSneaking() && !sneaking) {
-                return false;
-            }
-        }
-        if ((entity instanceof Monster || entity instanceof Slime) && !enableMonster) {
-            return false;
-        }
-        if (entity instanceof Animals && !enableAnimal) {
-            return false;
-        }
-        if (disabledEntities.contains(entity.getType())) {
-            return false;
-        }
-        return !disabledDamageCauses.contains(damageCause);
+        return ConfigUtil.isShowIndicator(entity, damageCause, damage, DISABLED_DI, enabled, enablePlayer, sneaking, enableMonster, enableAnimal, disabledEntities, disabledDamageCauses);
+    }
+
+    public Map<ArmorStand, Long> getArmorStands() {
+        return armorStands;
     }
 }
