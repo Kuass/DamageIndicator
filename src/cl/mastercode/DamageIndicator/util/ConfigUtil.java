@@ -1,6 +1,7 @@
 package cl.mastercode.DamageIndicator.util;
 
 import java.util.Set;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -17,7 +18,9 @@ import org.bukkit.event.entity.EntityDamageEvent;
 public final class ConfigUtil {
 
     public static boolean isShowIndicator(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage, String metadataTag, boolean enabled, boolean enablePlayer, boolean sneaking, boolean enableMonster, boolean enableAnimal, Set<EntityType> disabledEntities, Set<EntityDamageEvent.DamageCause> disabledDamageCauses) {
+        Bukkit.broadcastMessage(entity + " " + damageCause + " " + damage + " " + metadataTag + " " + enabled + " " + enablePlayer + " " + sneaking + " " + enableMonster + " " + enableAnimal + " " + disabledEntities + " " + disabledDamageCauses);
         if (entity.hasMetadata(metadataTag)) {
+            Bukkit.broadcastMessage("Metadata");
             return false;
         }
         if (!enabled) {
@@ -30,6 +33,7 @@ public final class ConfigUtil {
             return false;
         }
         if (entity.hasMetadata("NPC")) {
+            Bukkit.broadcastMessage("NPC");
             return false;
         }
         if (entity instanceof ArmorStand) {
