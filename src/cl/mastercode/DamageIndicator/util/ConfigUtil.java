@@ -32,10 +32,6 @@ public final class ConfigUtil {
         if (!(entity instanceof LivingEntity)) {
             return false;
         }
-        if (entity.hasMetadata("NPC")) {
-            Bukkit.broadcastMessage("NPC");
-            return false;
-        }
         if (entity instanceof ArmorStand) {
             return false;
         }
@@ -45,6 +41,9 @@ public final class ConfigUtil {
             }
             Player player = (Player) entity;
             if (player.isSneaking() && !sneaking) {
+                return false;
+            }
+            if (entity.hasMetadata("NPC")) {
                 return false;
             }
         }
