@@ -27,6 +27,8 @@ Damage Indicator:
   # List of disabled entity types that shouldn't spawn damage indicators
   # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
   # for all possible entities.
+  # If you don't want to disable entities, remove elements from the list set it to
+  # Disabled Entities: []
   Disabled Entities:
   - GHAST
   - ZOMBIE
@@ -35,11 +37,15 @@ Damage Indicator:
   # damage indicators.
   # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
   # for all possible spawn reasons.
+  # If you don't want to disable for spawn reasons, remove elements from the list set it to
+  # Disabled Spawn Reasons: []
   Disabled Spawn Reasons:
   - SPAWNER
   # List of damage causes that we must ignore for damage indicators.
   # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/entity/EntityDamageEvent.DamageCause.html
   # for all possible damage causes.
+  # If you don't want to disable for damage causes, remove elements from the list set it to
+  # Disabled Damage Causes: []
   Disabled Damage Causes:
   - SUICIDE
   # Enable or disable damage indicators for players who are sneaking, it is recommended to disable for PvP servers.
@@ -56,17 +62,23 @@ Blood:
   # List of disabled entity types that shouldn't bleed.
   # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
   # for all possible entities.
+  # If you don't want to disable entities, remove elements from the list set it to
+  # Disabled Entities: []
   Disabled Entities:
   - ZOMBIE
   - SKELETON
   # List of spawn reasons that we must listen and mark entities so they won't bleed.
   # See https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/event/entity/CreatureSpawnEvent.SpawnReason.html
   # for all possible spawn reasons.
+  # If you don't want to disable for spawn reasons, remove elements from the list set it to
+  # Disabled Spawn Reasons: []
   Disabled Spawn Reasons:
   - SPAWNER
   # List of damage causes that we must ignore for blood.
   # See https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/entity/EntityDamageEvent.DamageCause.html
   # for all possible damage causes.
+  # If you don't want to disable for damage causes, remove elements from the list set it to
+  # Disabled Damage Causes: []
   Disabled Damage Causes:
   - DROWNING
   # Enable or disable blood particles for players who are sneaking.
