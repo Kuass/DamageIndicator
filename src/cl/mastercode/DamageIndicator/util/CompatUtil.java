@@ -18,7 +18,6 @@ package cl.mastercode.DamageIndicator.util;
 import cl.mastercode.DamageIndicator.DIMain;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -45,13 +44,7 @@ public final class CompatUtil {
     }
 
     public static boolean isCanSetCollidable() {
-        try {
-            ArmorStand.class.getMethod("setCollidable", boolean.class);
-            return true;
-        } catch (NoSuchMethodException ex) {
-            ex.printStackTrace();
-            return false;
-        }
+        return MINOR_VERSION > 8;
     }
 
     public static boolean is113orHigher() {
