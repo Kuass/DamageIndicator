@@ -37,6 +37,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -155,7 +156,7 @@ public class BloodListener implements Listener {
             }
         } else {
             for (int i = 0; i < 5; i++) {
-                e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation().clone().add(random.nextDouble(), random.nextDouble(), random.nextDouble()), 0, 255, 0, 0, 1);
+                e.getEntity().getNearbyEntities(20, 20, 20).stream().filter(nearbyEntity -> nearbyEntity instanceof Player).map(nearbyEntity -> (Player) nearbyEntity).forEach(player -> player.spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation().clone().add(random.nextDouble(), random.nextDouble(), random.nextDouble()), 0, 255, 0, 0, 1));
             }
         }
     }
