@@ -18,6 +18,8 @@ package cl.mastercode.DamageIndicator.util;
 import cl.mastercode.DamageIndicator.DIMain;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -49,6 +51,13 @@ public final class CompatUtil {
 
     public static boolean is113orHigher() {
         return getMinorVersion() > 13;
+    }
+
+    public static double getMaxHealth(LivingEntity livingEntity) {
+        if (getMinorVersion() > 8) {
+            return livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        }
+        return livingEntity.getMaxHealth();
     }
 
     private static int getMinorVersion() {

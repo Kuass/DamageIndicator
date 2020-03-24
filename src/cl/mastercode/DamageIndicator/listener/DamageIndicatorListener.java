@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -170,7 +169,7 @@ public class DamageIndicatorListener implements Listener {
                 return;
             }
         }
-        if (((LivingEntity) e.getEntity()).getHealth() == ((LivingEntity) e.getEntity()).getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue()) {
+        if (((LivingEntity) e.getEntity()).getHealth() == CompatUtil.getMaxHealth((LivingEntity) e.getEntity())) {
             return;
         }
         if (!e.isCancelled()) {
