@@ -17,6 +17,20 @@ import org.bukkit.event.entity.EntityDamageEvent;
 public final class ConfigUtil {
 
     public static boolean isShowIndicator(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage, String metadataTag, boolean enabled, boolean enablePlayer, boolean sneaking, boolean enableMonster, boolean enableAnimal, Set<EntityType> disabledEntities, Set<EntityDamageEvent.DamageCause> disabledDamageCauses) {
+        /*
+        Bukkit.broadcastMessage("Type: " + entity.getType() + "\n" +
+                "Cause: " + damageCause + "\n" +
+                "Damage: " + damage + "\n" +
+                "Metadata: " + metadataTag + "\n" +
+                "Enabled: " + enabled + "\n" +
+                "Enabled Player: " + enablePlayer + "\n" +
+                "Sneaking: " + sneaking + "\n" +
+                "Enabled Monster: " + enableMonster + "\n" +
+                "Enabled Animal: " + enableAnimal + "\n" +
+                "Disabled Entities: " + disabledEntities + "\n" +
+                "Disabled Damage Causes: " + disabledDamageCauses
+        );
+        */
         if (entity.hasMetadata(metadataTag)) {
             return false;
         }

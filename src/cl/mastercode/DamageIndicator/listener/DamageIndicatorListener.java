@@ -51,13 +51,13 @@ import org.bukkit.metadata.FixedMetadataValue;
  * @author YitanTribal, Beelzebu
  */
 public class DamageIndicatorListener implements Listener {
-
     private static final String DISABLED_DI = "DI-DISABLED-DI";
     private final DIMain plugin;
     private final Map<ArmorStand, Long> armorStands = new LinkedHashMap<>();
     private final Set<EntityType> disabledEntities = new HashSet<>();
     private final Set<CreatureSpawnEvent.SpawnReason> disabledSpawnReasons = new HashSet<>();
     private final Set<EntityDamageEvent.DamageCause> disabledDamageCauses = new HashSet<>();
+    private final FixedMetadataValue armorStandMeta;
     private boolean enabled = true;
     private boolean enablePlayer = true;
     private boolean enableMonster = true;
@@ -67,6 +67,7 @@ public class DamageIndicatorListener implements Listener {
 
     public DamageIndicatorListener(DIMain plugin) {
         this.plugin = plugin;
+        armorStandMeta = new FixedMetadataValue(plugin, 0);
         reload();
     }
 
@@ -115,7 +116,7 @@ public class DamageIndicatorListener implements Listener {
             }
             return;
         }
-        if (!spawnArmorStand(e.getEntity(), null, .1)) {
+        if (!isSpawnArmorStand(e.getEntity(), null, .1)) {
             return;
         }
         if (disabledSpawnReasons.contains(e.getSpawnReason())) {
@@ -179,12 +180,13 @@ public class DamageIndicatorListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDamageEvent(EntityDamageEvent e) {
+        if (e.isCancelled()) {
+            return;
+        }
         if (!(e.getEntity() instanceof LivingEntity)) {
             return;
         }
-        if (!e.isCancelled()) {
-            handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityDamage").replace("%damage%", damageFormat(e.getFinalDamage()))), e.getCause(), e.getFinalDamage());
-        }
+        handleArmorStand((LivingEntity) e.getEntity(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("Damage Indicator.Format.EntityDamage").replace("%damage%", damageFormat(e.getFinalDamage()))), e.getCause(), e.getFinalDamage());
     }
 
     private String damageFormat(double damage) {
@@ -198,35 +200,21 @@ public class DamageIndicatorListener implements Listener {
     }
 
     private void handleArmorStand(LivingEntity entity, String format, EntityDamageEvent.DamageCause damageCause, double damage) {
-        if (!spawnArmorStand(entity, damageCause, damage)) {
-            return;
+        if (isSpawnArmorStand(entity, damageCause, damage)) {
+            spawnArmorStand(entity.getLocation(), format);
         }
-        armorStands.put(getDefaultArmorStand(entity.getLocation(), format), System.currentTimeMillis());
     }
 
-    public ArmorStand getDefaultArmorStand(Location loc, String name) {
-        ArmorStand as = (ArmorStand) loc.getWorld().spawnEntity(loc.clone().add(0, 255 - loc.getY(), 0), EntityType.ARMOR_STAND);
-        as.setVisible(false);
-        as.setCustomNameVisible(false);
-        as.setSmall(true);
-        as.setRemoveWhenFarAway(true);
-        as.setMetadata("Mastercode-DamageIndicator", new FixedMetadataValue(plugin, 1));
-        as.setGravity(false);
-        if (CompatUtil.isCanSetCollidable()) {
-            as.setCollidable(false);
-            as.setInvulnerable(true);
-        }
-        as.setMarker(true);
-        as.teleport(loc.add(0, plugin.getConfig().getDouble("Damage Indicator.Distance"), 0));
-        as.setCustomName(name);
-        as.setCustomNameVisible(true);
+    public ArmorStand spawnArmorStand(Location loc, String name) {
+        ArmorStand armorStand = CompatUtil.buildArmorStand(loc, plugin.getConfig().getDouble("Damage Indicator.Distance"), armorStandMeta, name);
         if (hider != null) {
-            Bukkit.getOnlinePlayers().stream().filter(op -> !plugin.getStorageProvider().showArmorStand(op)).forEach(op -> hider.hideEntity(op, as));
+            Bukkit.getOnlinePlayers().stream().filter(op -> !plugin.getStorageProvider().showArmorStand(op)).forEach(op -> hider.hideEntity(op, armorStand));
         }
-        return as;
+        armorStands.put(armorStand, System.currentTimeMillis());
+        return armorStand;
     }
 
-    private boolean spawnArmorStand(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
+    private boolean isSpawnArmorStand(Entity entity, EntityDamageEvent.DamageCause damageCause, double damage) {
         return ConfigUtil.isShowIndicator(entity, damageCause, damage, DISABLED_DI, enabled, enablePlayer, sneaking, enableMonster, enableAnimal, disabledEntities, disabledDamageCauses);
     }
 
