@@ -1,15 +1,9 @@
 package cl.mastercode.DamageIndicator.util;
 
-import java.util.Set;
-import org.bukkit.entity.Animals;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
+import org.bukkit.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent;
+
+import java.util.Set;
 
 /**
  * @author Beelzebu

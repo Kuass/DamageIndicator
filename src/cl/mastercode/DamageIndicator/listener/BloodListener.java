@@ -18,41 +18,29 @@ package cl.mastercode.DamageIndicator.listener;
 import cl.mastercode.DamageIndicator.DIMain;
 import cl.mastercode.DamageIndicator.util.CompatUtil;
 import cl.mastercode.DamageIndicator.util.ConfigUtil;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
+
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Beelzebu
@@ -72,19 +60,10 @@ public class BloodListener implements Listener {
     private boolean enableMonster = true;
     private boolean enableAnimal = true;
     private boolean sneaking = true;
-    private Method playEffect;
 
     public BloodListener(DIMain plugin) {
         this.plugin = plugin;
-        if (!CompatUtil.is113orHigher()) {
-            try {
-                playEffect = World.Spigot.class.getMethod("playEffect", Location.class, Effect.class, int.class, int.class, float.class, float.class, float.class, float.class, int.class, int.class);
-            } catch (ReflectiveOperationException e) {
-                e.printStackTrace();
-            }
-        } else {
-            playEffect = null;
-        }
+
         reload();
     }
 
@@ -132,32 +111,6 @@ public class BloodListener implements Listener {
         }
         if (disabledSpawnReasons.contains(e.getSpawnReason())) {
             e.getEntity().setMetadata(DISABLED_BLOOD, new FixedMetadataValue(plugin, 1));
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onEntityDamage(EntityDamageEvent e) {
-        if (e.isCancelled()) {
-            return;
-        }
-        Entity entity = e.getEntity();
-        if (!showBlood(entity, e.getCause(), e.getFinalDamage())) {
-            return;
-        }
-        if (CompatUtil.is113orHigher()) {
-            e.getEntity().getWorld().spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation(), 7, .5, 1, .5, new Particle.DustOptions(Color.RED, 3f));
-        } else if (CompatUtil.MINOR_VERSION == 8) {
-            try {
-                if (playEffect != null) {
-                    playEffect.invoke(e.getEntity().getWorld().spigot(), ((LivingEntity) e.getEntity()).getEyeLocation(), Effect.valueOf("COLOURED_DUST"), 0, 0, 0.4f, 0.3f, 0.4f, 0, 8, 16);
-                }
-            } catch (ReflectiveOperationException e1) {
-                e1.printStackTrace();
-            }
-        } else {
-            for (int i = 0; i < 5; i++) {
-                e.getEntity().getNearbyEntities(20, 20, 20).stream().filter(nearbyEntity -> nearbyEntity instanceof Player).map(nearbyEntity -> (Player) nearbyEntity).forEach(player -> player.spawnParticle(Particle.REDSTONE, ((LivingEntity) e.getEntity()).getEyeLocation().clone().add(random.nextDouble(), random.nextDouble(), random.nextDouble()), 0, 255, 0, 0, 1));
-            }
         }
     }
 

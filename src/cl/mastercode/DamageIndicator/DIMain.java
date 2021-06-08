@@ -22,13 +22,14 @@ import cl.mastercode.DamageIndicator.storage.SimpleStorageProvider;
 import cl.mastercode.DamageIndicator.storage.StorageProvider;
 import cl.mastercode.DamageIndicator.util.CompatUtil;
 import cl.mastercode.DamageIndicator.util.ConfigUpdateHandler;
-import java.util.Iterator;
-import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author YitanTribal, Beelzebu

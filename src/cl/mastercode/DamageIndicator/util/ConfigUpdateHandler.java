@@ -1,6 +1,9 @@
 package cl.mastercode.DamageIndicator.util;
 
 import cl.mastercode.DamageIndicator.DIMain;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,8 +12,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 
 public class ConfigUpdateHandler {
 

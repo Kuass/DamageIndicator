@@ -1,15 +1,15 @@
 name: DamageIndicator
 main: cl.mastercode.DamageIndicator.DIMain
 author: CristianDossow
-authors: [Beelzebu]
+authors: [ Beelzebu, Kua_ ]
 version: ${project.version}
-softdepend: [ProtocolLib]
-api-version: 1.13
+softdepend: [ ProtocolLib ]
+api-version: 1.16
 commands:
   damageindicator:
     description: Main DamageIndicator command
     usage: /<command> <arguments>
-    aliases: [di]
+    aliases: [ di ]
 permissions:
   damageindicator.admin:
     description: Access to admin commands

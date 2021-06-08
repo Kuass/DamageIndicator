@@ -117,8 +117,8 @@ public final class CommandHandler implements CommandExecutor {
         }
         sender.sendMessage(ChatColor.DARK_AQUA + "<===== Damage Indicator " + Bukkit.getServer().getPluginManager().getPlugin("DamageIndicator").getDescription().getVersion() + " =====>");
         sender.sendMessage(ChatColor.DARK_AQUA + "/di reload");
-        sender.sendMessage(ChatColor.DARK_AQUA + "/di clear <range> " + ChatColor.AQUA + "#remove the damage indicators in the range");
-        sender.sendMessage(ChatColor.DARK_AQUA + "/di clearall " + ChatColor.AQUA + "#remove the damage indicators in the world (may cause lag)");
-        sender.sendMessage(ChatColor.DARK_AQUA + "/di toggle " + ChatColor.AQUA + "#enable/disable damage indicators for you");
+        sender.sendMessage(ChatColor.DARK_AQUA + "/di clear <range> " + ChatColor.AQUA + "- remove the damage indicators in the range");
+        sender.sendMessage(ChatColor.DARK_AQUA + "/di clearall " + ChatColor.AQUA + "- remove the damage indicators in the world (may cause lag)");
+        sender.sendMessage(ChatColor.DARK_AQUA + "/di toggle " + ChatColor.AQUA + "- enable/disable damage indicators for you");
     }
 }

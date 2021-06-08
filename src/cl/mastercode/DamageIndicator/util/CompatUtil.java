@@ -53,15 +53,8 @@ public final class CompatUtil {
         return MINOR_VERSION > 8;
     }
 
-    public static boolean is113orHigher() {
-        return _getMinorVersion() > 13;
-    }
-
     public static double getMaxHealth(LivingEntity livingEntity) {
-        if (MINOR_VERSION > 8) {
-            return livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
-        }
-        return livingEntity.getMaxHealth();
+        return livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
     }
 
     private static int _getMinorVersion() {
