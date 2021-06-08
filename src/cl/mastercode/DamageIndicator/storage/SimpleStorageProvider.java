@@ -46,7 +46,7 @@ public class SimpleStorageProvider implements StorageProvider {
 
     @Override
     public boolean showArmorStand(Player player) {
-        return data.getBoolean(player.getUniqueId().toString(), true);
+        return !data.getBoolean(player.getUniqueId().toString(), true);
     }
 
     @Override

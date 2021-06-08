@@ -49,10 +49,6 @@ public final class CompatUtil {
         }
     }
 
-    public static boolean isCanSetCollidable() {
-        return MINOR_VERSION > 8;
-    }
-
     public static double getMaxHealth(LivingEntity livingEntity) {
         return livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
     }
@@ -101,10 +97,9 @@ public final class CompatUtil {
         armorStand.setSmall(true);
         armorStand.setCustomNameVisible(false);
         armorStand.setMetadata("Mastercode-DamageIndicator", fixedMetadataValue);
-        if (CompatUtil.isCanSetCollidable()) {
-            armorStand.setCollidable(false);
-            armorStand.setInvulnerable(true);
-        }
+        armorStand.setCollidable(false);
+        armorStand.setInvulnerable(true);
+
         armorStand.teleport(location.clone().add(0, distance, 0));
         armorStand.setRemoveWhenFarAway(true);
     }

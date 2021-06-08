@@ -105,7 +105,7 @@ public final class CommandHandler implements CommandExecutor {
                     break;
                 case "toggle":
                     if (isPlayer(sender)) {
-                        boolean status = !plugin.getStorageProvider().showArmorStand((Player) sender);
+                        boolean status = plugin.getStorageProvider().showArmorStand((Player) sender);
                         plugin.getStorageProvider().setShowArmorStand((Player) sender, status);
                         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', status ? plugin.getConfig().getString("Messages.Damage Indicator.Enabled", "") : plugin.getConfig().getString("Messages.Damage Indicator.Disabled", "")));
                     } else {
